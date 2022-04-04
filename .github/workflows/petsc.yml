@@ -29,7 +29,7 @@ jobs:
       OMPI_MCA_hwloc_base_binding_policy: none
       PETSC_SLEPC_OPTFLAGS: "-O2"
       PETSC_SLEPC_MAKE_NP: 2
-      PETSC_SLEPC_DEBUGGING: "no"
+      PETSC_SLEPC_DEBUGGING: "yes"
       MPICH_CONFIGURE_OPTIONS: "FCFLAGS=-fallow-argument-mismatch FFLAGS=-fallow-argument-mismatch --with-device=ch4:ofi"  # See https://github.com/pmodels/mpich/issues/5811
       MPICH_VERSION: 4.0.1
       PETSC_DIR: "/usr/local/petsc"

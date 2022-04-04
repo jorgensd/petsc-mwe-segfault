@@ -1,0 +1,127 @@
+name: Test petsc-3.16.4
+
+on:
+  # Trigger tests on push
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    container: ubuntu:20.04
+
+    strategy:
+      matrix:
+        petsc_version: ["3.16.4", "3.17.0"]
+      fail-fast: false
+
+    env:
+      PETSC_ARCH: "linux-gnu-real-32"
+      OMPI_ALLOW_RUN_AS_ROOT: 1
+      OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+      OMPI_MCA_rmaps_base_oversubscribe: 1
+      OMPI_MCA_plm: isolated
+      OMPI_MCA_btl_vader_single_copy_mechanism: none
+      OMPI_MCA_mpi_yield_when_idle: 1
+      OMPI_MCA_hwloc_base_binding_policy: none
+      PETSC_SLEPC_OPTFLAGS: "-O2"
+      PETSC_SLEPC_MAKE_NP: 2
+      PETSC_SLEPC_DEBUGGING: "no"
+      MPICH_CONFIGURE_OPTIONS: "FCFLAGS=-fallow-argument-mismatch FFLAGS=-fallow-argument-mismatch --with-device=ch4:ofi"  # See https://github.com/pmodels/mpich/issues/5811
+      MPICH_VERSION: 4.0.1
+      PETSC_DIR: "/usr/local/petsc"
+      PETSC_VERSION: ${{ matrix.petsc_version }}
+      OPENBLAS_NUM_THREADS: 1
+      OPENBLAS_VERBOSE: 0
+      BUILD_NP: 2
+    steps:
+      - uses: actions/checkout@v2
+         
+      - name: Install dependencies
+        run: |
+          export DEBIAN_FRONTEND=noninteractive && \
+          apt-get -qq update && \
+          apt-get -yq --with-new-pkgs -o Dpkg::Options::="--force-confold" upgrade && \
+          apt-get -y install \
+          clang \
+          cmake \
+          g++ \
+          gfortran \
+          libboost-dev \
+          libboost-filesystem-dev \
+          libboost-timer-dev \
+          liblapack-dev \
+          libopenblas-dev \
+          llvm-9 \
+          ninja-build \
+          pkg-config \
+          python3-dev \
+          python3-numpy \
+          python3-pip \
+          python3-scipy \
+          python3-setuptools \
+          wget && \
+          apt-get clean && \
+          rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+      
+      - name: Test gfortran
+        run: |
+          gfortran -fallow-argument-mismatch --version && \
+          gcc -O2 --version
+
+
+      - name: Install MPI
+        run: |
+          wget http://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz && \
+          tar xfz mpich-${MPICH_VERSION}.tar.gz  && \
+          cd mpich-${MPICH_VERSION}  && \
+          ./configure ${MPICH_CONFIGURE_OPTIONS} && \
+          make -j${BUILD_NP} install
+          ldconfig
+      
+      - name: Install MPI4py
+        run: |
+          export CC=mpicc
+          pip3 install --no-cache-dir mpi4py 
+
+      - name: Install PETSc
+        run: |
+          export CC=mpicc
+          apt-get -qq update && \
+          apt-get -y install bison flex && \
+          wget -nc --quiet http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-lite-${PETSC_VERSION}.tar.gz -O petsc-${PETSC_VERSION}.tar.gz && \
+          mkdir -p ${PETSC_DIR} && tar -xf petsc-${PETSC_VERSION}.tar.gz -C ${PETSC_DIR} --strip-components 1 && \
+          cd ${PETSC_DIR} && \
+          # Real, 32-bit int
+          python3 ./configure \
+          PETSC_ARCH=linux-gnu-real-32 \
+          --COPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+          --CXXOPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+          --FOPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+          --with-make-np=${PETSC_SLEPC_MAKE_NP} \
+          --with-64-bit-indices=no \
+          --with-debugging=${PETSC_SLEPC_DEBUGGING} \
+          --with-fortran-bindings=no \
+          --with-shared-libraries \
+          --download-hypre \
+          --download-metis \
+          --download-mumps \
+          --download-ptscotch \
+          --download-scalapack \
+          --download-spai \
+          --download-suitesparse \
+          --download-superlu \
+          --download-superlu_dist \
+          --with-scalar-type=real && \
+          make PETSC_DIR=/usr/local/petsc PETSC_ARCH=linux-gnu-real-32 ${MAKEFLAGS} all && \
+          cd src/binding/petsc4py && \
+          PETSC_ARCH=linux-gnu-real-32 pip3 install --no-cache-dir .
+
+      - name: Run problem (serial)
+        run: python3 mwe.py
+          
+      - name: Run problem (parallel)
+        run: mpirun -n 2 python3 mwe.py

@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        petsc_version: ["3.17.5", "3.18.5"]
+        petsc_version: ["3.17.4", "3.17.5", "3.18.5"]
       fail-fast: false
 
     env:

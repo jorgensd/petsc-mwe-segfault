@@ -47,7 +47,6 @@ jobs:
           libboost-timer-dev \
           liblapack-dev \
           libopenblas-dev \
-          llvm-9 \
           ninja-build \
           pkg-config \
           python3-dev \

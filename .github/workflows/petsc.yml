@@ -106,7 +106,6 @@ jobs:
           --with-shared-libraries \
           --download-hypre \
           --download-metis \
-          --download-mumps \
           --download-ptscotch \
           --download-scalapack \
           --download-suitesparse \

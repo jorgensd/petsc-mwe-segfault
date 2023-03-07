@@ -4,8 +4,8 @@ import numpy as np
 petsc_options = {"ksp_rtol": 1.0e-8,
                  "ksp_type": "cg",
                  "pc_type": "gamg",
-                 "ksp_view": None,
-                 "help": None,
+                 # "ksp_view": None,
+                 # "help": None,
                  "ksp_monitor": None
                  }
 

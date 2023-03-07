@@ -114,5 +114,8 @@ jobs:
       - name: Run problem (serial)
         run: python3 mwe.py
           
-      - name: Run problem (parallel)
+      - name: Run problem (parallel, 2 procs)
+        run: mpirun -n 2 python3 mwe.py
+          
+      - name: Run problem (parallel, 3 procs)
         run: mpirun -n 3 python3 mwe.py

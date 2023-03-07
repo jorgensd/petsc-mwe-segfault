@@ -1,5 +1,4 @@
-name: Test petsc-3.16.4
-
+name: Test PETSc with predefined matrices
 on:
   # Trigger tests on push
   push:
@@ -10,8 +9,8 @@ on:
       - main
 jobs:
   build:
-    runs-on: ubuntu-20.04
-    container: ubuntu:21.10
+    runs-on: ubuntu-22.04
+    container: ubuntu:22.04
 
     strategy:
       matrix:

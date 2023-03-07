@@ -1,4 +1,4 @@
-name: Test PETSc with predefined matrices
+name: Test PETSc with predefined matrix and vector
 on:
   # Trigger tests on push
   push:
@@ -30,7 +30,7 @@ jobs:
       OPENBLAS_VERBOSE: 0
       BUILD_NP: 2
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
          
       - name: Install dependencies
         run: |

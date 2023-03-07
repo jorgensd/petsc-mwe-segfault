@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        petsc_version: ["3.17.4", "3.17.5", "3.18.5"]
+        petsc_version: ["3.17.0", "3.17.5", "3.18.5"]
       fail-fast: false
 
     env:
@@ -23,7 +23,7 @@ jobs:
       PETSC_SLEPC_MAKE_NP: 2
       PETSC_SLEPC_DEBUGGING: "yes"
       MPICH_CONFIGURE_OPTIONS: "FCFLAGS=-fallow-argument-mismatch FFLAGS=-fallow-argument-mismatch --with-device=ch4:ofi"  # See https://github.com/pmodels/mpich/issues/5811
-      MPICH_VERSION: 4.1
+      # MPICH_VERSION: 4.1
       PETSC_DIR: "/usr/local/petsc"
       PETSC_VERSION: ${{ matrix.petsc_version }}
       OPENBLAS_NUM_THREADS: 1
@@ -63,15 +63,22 @@ jobs:
           gfortran -fallow-argument-mismatch --version && \
           gcc -O2 --version
 
-
-      - name: Install MPI
+      - name: Install mpich
         run: |
-          wget http://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz && \
-          tar xfz mpich-${MPICH_VERSION}.tar.gz  && \
-          cd mpich-${MPICH_VERSION}  && \
-          ./configure ${MPICH_CONFIGURE_OPTIONS} && \
-          make -j${BUILD_NP} install
-          ldconfig
+          apt-get update && \
+          apt-get -y install mpich
+          apt-get clean && \
+          rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+          
+
+      # - name: Install MPI
+      #   run: |
+      #     wget http://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz && \
+      #     tar xfz mpich-${MPICH_VERSION}.tar.gz  && \
+      #     cd mpich-${MPICH_VERSION}  && \
+      #     ./configure ${MPICH_CONFIGURE_OPTIONS} && \
+      #     make -j${BUILD_NP} install
+      #     ldconfig
       
       - name: Install MPI4py
         run: |

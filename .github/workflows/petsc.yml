@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        petsc_version: ["3.16.4", "3.16.5", "3.16.6", "3.17.0", "3.17.5", "3.18.5", "jolivet/fix-segfault-gamg"]
+        petsc_version: ["v3.16.4", "v3.16.5", "v3.16.6", "v3.17.0", "v3.17.5", "v3.18.5", "jolivet/fix-segfault-gamg"]
       fail-fast: false
 
     env:
@@ -62,7 +62,7 @@ jobs:
 
       - name: Fetch PETSc
         run:
-          git clone --single-branch --branch=${PETSC_VERSION} git@gitlab.com:petsc/petsc.git ${PETSC_DIR} 
+          git clone --single-branch --branch=${PETSC_VERSION} https://gitlab.com/petsc/petsc.git ${PETSC_DIR}
 
       - name: Test gfortran
         run: |

@@ -59,6 +59,11 @@ jobs:
           apt-get clean && \
           rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
       
+
+      - name: Fetch PETSc
+        run:
+          git clone --single-branch --branch=${PETSC_VERSION} git@gitlab.com:petsc/petsc.git ${PETSC_DIR} 
+
       - name: Test gfortran
         run: |
           gfortran -fallow-argument-mismatch --version && \
@@ -77,10 +82,6 @@ jobs:
           export CC=mpicc
           pip3 install --no-cache-dir mpi4py 
 
-      - name: Fetch PETSc
-        run: |
-          cd ${PETSC_DIR} && \
-          git clone --single-branch --branch=${PETSC_VERSION} git@gitlab.com:petsc/petsc.git
 
       - name: Install PETSc
         run: |

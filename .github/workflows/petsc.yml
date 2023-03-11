@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        petsc_version: ["3.16.4", "3.16.5", "3.16.6", "3.17.0", "3.17.5", "3.18.5"]
+        petsc_version: ["3.16.4", "3.16.5", "3.16.6", "3.17.0", "3.17.5", "3.18.5", "jolivet/fix-segfault-gamg"]
       fail-fast: false
 
     env:
@@ -40,6 +40,7 @@ jobs:
           apt-get -y install \
           clang \
           cmake \
+          git \
           g++ \
           gfortran \
           libboost-dev \
@@ -76,15 +77,18 @@ jobs:
           export CC=mpicc
           pip3 install --no-cache-dir mpi4py 
 
+      - name: Fetch PETSc
+        run: |
+          cd ${PETSC_DIR} && \
+          git clone --single-branch --branch=${PETSC_VERSION} git@gitlab.com:petsc/petsc.git
+
       - name: Install PETSc
         run: |
           export CC=mpicc
           apt-get -qq update && \
           apt-get -y install bison flex && \
-          wget -nc --quiet http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-lite-${PETSC_VERSION}.tar.gz -O petsc-${PETSC_VERSION}.tar.gz && \
-          mkdir -p ${PETSC_DIR} && tar -xf petsc-${PETSC_VERSION}.tar.gz -C ${PETSC_DIR} --strip-components 1 && \
-          cd ${PETSC_DIR} && \
           # Complex, 32-bit int
+          cd ${PETSC_DIR}/petsc
           python3 ./configure \
           PETSC_ARCH=linux-gnu-complex-32 \
           --COPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \

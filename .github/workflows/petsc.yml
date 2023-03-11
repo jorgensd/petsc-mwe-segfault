@@ -89,7 +89,7 @@ jobs:
           apt-get -qq update && \
           apt-get -y install bison flex && \
           # Complex, 32-bit int
-          cd ${PETSC_DIR}/petsc
+          cd ${PETSC_DIR}
           python3 ./configure \
           PETSC_ARCH=linux-gnu-complex-32 \
           --COPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \

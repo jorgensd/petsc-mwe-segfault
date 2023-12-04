@@ -20,7 +20,6 @@ jobs:
     env:
       PETSC_ARCH: "linux-gnu-real-32"
       PETSC_SLEPC_OPTFLAGS: "-O2"
-      PETSC_SLEPC_MAKE_NP: 2
       PETSC_SLEPC_DEBUGGING: "yes"
       MPICH_CONFIGURE_OPTIONS: "FCFLAGS=-fallow-argument-mismatch FFLAGS=-fallow-argument-mismatch --with-device=ch4:ofi" # See https://github.com/pmodels/mpich/issues/5811
       # MPICH_VERSION: 4.1
@@ -84,24 +83,26 @@ jobs:
           mkdir -p ${PETSC_DIR} && tar -xf petsc-${PETSC_VERSION}.tar.gz -C ${PETSC_DIR} --strip-components 1 && \
           cd ${PETSC_DIR} && \
           # Real, 32-bit int
-          python3 ./configure \
-          PETSC_ARCH=linux-gnu-real-32 \
+          ./configure \
+          PETSC_ARCH=${PETSC_ARCH} \
           --COPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
           --CXXOPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
           --FOPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
-          --with-make-np=${PETSC_SLEPC_MAKE_NP} \
           --with-64-bit-indices=no \
           --with-debugging=${PETSC_SLEPC_DEBUGGING} \
           --with-fortran-bindings=no \
           --with-shared-libraries \
           --download-metis \
+          --download-mumps \
           --download-ptscotch \
           --download-scalapack \
-          --download-suitesparse \
-          --with-scalar-type=real && \
-          make PETSC_DIR=/usr/local/petsc PETSC_ARCH=linux-gnu-real-32 ${MAKEFLAGS} all && \
+          --download-superlu \
+          --download-superlu_dist \
+          --with-scalar-type=real \
+          --with-precision=single && \
+          make PETSC_DIR=${PETSC_DIR} PETSC_ARCH=${PETSC_ARCH} ${MAKEFLAGS} all && \
           cd src/binding/petsc4py && \
-          PETSC_ARCH=linux-gnu-real-32 pip3 install --no-cache-dir .
+          PETSC_ARCH=${PETSC_ARCH} pip3 install --no-cache-dir .
 
           - name: Get Basix
           uses: actions/checkout@v3

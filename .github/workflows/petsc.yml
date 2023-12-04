@@ -14,15 +14,15 @@ jobs:
 
     strategy:
       matrix:
-        petsc_version: ["3.16.4", "3.16.5", "3.16.6", "3.17.0", "3.17.5", "3.18.5"]
+        petsc_version: ["3.20.0", "3.20.1"]
       fail-fast: false
 
     env:
-      PETSC_ARCH: "linux-gnu-complex-32"
+      PETSC_ARCH: "linux-gnu-real-32"
       PETSC_SLEPC_OPTFLAGS: "-O2"
       PETSC_SLEPC_MAKE_NP: 2
       PETSC_SLEPC_DEBUGGING: "yes"
-      MPICH_CONFIGURE_OPTIONS: "FCFLAGS=-fallow-argument-mismatch FFLAGS=-fallow-argument-mismatch --with-device=ch4:ofi"  # See https://github.com/pmodels/mpich/issues/5811
+      MPICH_CONFIGURE_OPTIONS: "FCFLAGS=-fallow-argument-mismatch FFLAGS=-fallow-argument-mismatch --with-device=ch4:ofi" # See https://github.com/pmodels/mpich/issues/5811
       # MPICH_VERSION: 4.1
       PETSC_DIR: "/usr/local/petsc"
       PETSC_VERSION: ${{ matrix.petsc_version }}
@@ -30,8 +30,8 @@ jobs:
       OPENBLAS_VERBOSE: 0
       BUILD_NP: 2
     steps:
-      - uses: actions/checkout@v3
-         
+      - uses: actions/checkout@v4
+
       - name: Install dependencies
         run: |
           export DEBIAN_FRONTEND=noninteractive && \
@@ -57,7 +57,7 @@ jobs:
           wget && \
           apt-get clean && \
           rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-      
+
       - name: Test gfortran
         run: |
           gfortran -fallow-argument-mismatch --version && \
@@ -69,12 +69,11 @@ jobs:
           apt-get -y install mpich
           apt-get clean && \
           rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-      
-      
+
       - name: Install MPI4py
         run: |
           export CC=mpicc
-          pip3 install --no-cache-dir mpi4py 
+          pip3 install --no-cache-dir mpi4py
 
       - name: Install PETSc
         run: |
@@ -84,9 +83,9 @@ jobs:
           wget -nc --quiet http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-lite-${PETSC_VERSION}.tar.gz -O petsc-${PETSC_VERSION}.tar.gz && \
           mkdir -p ${PETSC_DIR} && tar -xf petsc-${PETSC_VERSION}.tar.gz -C ${PETSC_DIR} --strip-components 1 && \
           cd ${PETSC_DIR} && \
-          # Complex, 32-bit int
+          # Real, 32-bit int
           python3 ./configure \
-          PETSC_ARCH=linux-gnu-complex-32 \
+          PETSC_ARCH=linux-gnu-real-32 \
           --COPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
           --CXXOPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
           --FOPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
@@ -99,16 +98,68 @@ jobs:
           --download-ptscotch \
           --download-scalapack \
           --download-suitesparse \
-          --with-scalar-type=complex && \
-          make PETSC_DIR=/usr/local/petsc PETSC_ARCH=linux-gnu-complex-32 ${MAKEFLAGS} all && \
+          --with-scalar-type=real && \
+          make PETSC_DIR=/usr/local/petsc PETSC_ARCH=linux-gnu-real-32 ${MAKEFLAGS} all && \
           cd src/binding/petsc4py && \
-          PETSC_ARCH=linux-gnu-complex-32 pip3 install --no-cache-dir .
+          PETSC_ARCH=linux-gnu-real-32 pip3 install --no-cache-dir .
 
-      - name: Run problem (serial)
-        run: python3 mwe.py
-          
-      - name: Run problem (parallel, 2 procs)
-        run: mpirun -n 2 python3 mwe.py
-          
-      - name: Run problem (parallel, 3 procs)
-        run: mpirun -n 3 python3 mwe.py
+          - name: Get Basix
+          uses: actions/checkout@v3
+          with:
+            path: ./basix
+            repository: FEniCS/basix
+            ref: v0.7.0
+
+      - name: Get DOLFINx
+        uses: actions/checkout@v4
+        with:
+          path: ./dolfinx
+          repository: FEniCS/dolfinx
+          ref: v0.7.2
+
+      - name: Install UFL, Basix, FFCx
+        shell: bash -el {0}
+        run: |
+          cmake -G Ninja -B build-basix -DCMAKE_BUILD_TYPE="Release" -S ./basix/cpp/
+          cmake --build build-basix --parallel 2
+          cmake --install build-basix
+          python3 -m pip install ./basix/python
+          python3 -m pip install git+https://github.com/FEniCS/ufl.git@2023.2.0
+          python3 -m pip install git+https://github.com/FEniCS/ffcx.git@v0.7.0
+
+      - name: Configure C++ (DOLFINx)
+        shell: bash -el {0}
+        run: PETSC_DIR=${{ env.PETSC_DIR }} PETSC_ARCH=${{ env.PETSC_ARCH }} cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -B build-dolfinx -S ./dolfinx/cpp/
+
+      - name: Build and install C++ library (dolfinx)
+        shell: bash -el {0}
+        run: |
+          cmake --build build-dolfinx
+          cmake --install build-dolfinx
+
+      - name: Build Python interface (DOLFINx)
+        shell: bash -el {0}
+        run: PETSC_DIR=${{ env.PETSC_DIR }} PETSC_ARCH=${{ env.PETSC_ARCH }} BUILD_TYPE=Debug python3 -m pip -v install ./dolfinx/python/
+
+      - name: Get Asimov-contact
+        uses: actions/checkout@v4
+        with:
+          path: ./contact
+          repository: Wells-Group/asimov-contact
+          ref: main
+
+      - name: Install contact (C++)
+        run: |
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -B build-contact -S ./contact/cpp/
+          ninja -C build-contact install
+
+      - name: Install contact
+        run: BUILD_TYPE="Debug" python3 -m pip -v install ./contact/python/
+
+      - name: Run demos
+        run: |
+          cd ./contact/python/demos
+          mkdir -p results
+          mkdir -p meshes
+          python3 compare_custom_snes_one_sided.py
+          python3 compare_nitsche_snes.py

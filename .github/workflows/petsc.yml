@@ -99,8 +99,8 @@ jobs:
           cd src/binding/petsc4py && \
           PETSC_ARCH=${PETSC_ARCH} pip3 install --no-cache-dir .
 
-          - name: Get Basix
-          uses: actions/checkout@v3
+        - name: Get Basix
+          uses: actions/checkout@v4
           with:
             path: ./basix
             repository: FEniCS/basix

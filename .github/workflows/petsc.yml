@@ -21,7 +21,7 @@ jobs:
       HDF5_SERIES: "1.14"
       HDF5_PATCH: "2"
       HDF5_FIX: ""
-      PETSC_ARCH: "linux-gnu-real32-32"
+      PETSC_ARCH: "linux-gnu-real64-32"
       PETSC_SLEPC_OPTFLAGS: "-O2"
       PETSC_SLEPC_DEBUGGING: "yes"
       PETSC_DIR: "/usr/local/petsc"
@@ -106,7 +106,7 @@ jobs:
           --download-superlu \
           --download-superlu_dist \
           --with-scalar-type=real \
-          --with-precision=single && \
+          --with-precision=double && \
           make PETSC_DIR=${PETSC_DIR} PETSC_ARCH=${PETSC_ARCH} ${MAKEFLAGS} all && \
           cd src/binding/petsc4py && \
           PETSC_ARCH=${PETSC_ARCH} pip3 install --no-cache-dir .

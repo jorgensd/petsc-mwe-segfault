@@ -14,20 +14,17 @@ jobs:
 
     strategy:
       matrix:
-        petsc_version: ["3.20.0", "3.20.1"]
+        petsc_version: ["3.20.0", "3.20.1", "3.20.2"]
       fail-fast: false
 
     env:
-      PETSC_ARCH: "linux-gnu-real-32"
+      PETSC_ARCH: "linux-gnu-real32-32"
       PETSC_SLEPC_OPTFLAGS: "-O2"
       PETSC_SLEPC_DEBUGGING: "yes"
-      MPICH_CONFIGURE_OPTIONS: "FCFLAGS=-fallow-argument-mismatch FFLAGS=-fallow-argument-mismatch --with-device=ch4:ofi" # See https://github.com/pmodels/mpich/issues/5811
-      # MPICH_VERSION: 4.1
       PETSC_DIR: "/usr/local/petsc"
       PETSC_VERSION: ${{ matrix.petsc_version }}
       OPENBLAS_NUM_THREADS: 1
       OPENBLAS_VERBOSE: 0
-      BUILD_NP: 2
     steps:
       - uses: actions/checkout@v4
 
@@ -71,15 +68,13 @@ jobs:
 
       - name: Install MPI4py
         run: |
-          export CC=mpicc
           pip3 install --no-cache-dir mpi4py
 
       - name: Install PETSc
         run: |
-          export CC=mpicc
           apt-get -qq update && \
           apt-get -y install bison flex && \
-          wget -nc --quiet http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-lite-${PETSC_VERSION}.tar.gz -O petsc-${PETSC_VERSION}.tar.gz && \
+          wget -nc --quiet https://web.cels.anl.gov/projects/petsc/download/release-snapshots/petsc-lite-3.20.0.tar.gz -O petsc-${PETSC_VERSION}.tar.gz && \
           mkdir -p ${PETSC_DIR} && tar -xf petsc-${PETSC_VERSION}.tar.gz -C ${PETSC_DIR} --strip-components 1 && \
           cd ${PETSC_DIR} && \
           # Real, 32-bit int

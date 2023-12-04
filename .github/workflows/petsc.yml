@@ -206,3 +206,17 @@ jobs:
           mkdir -p meshes
           python3 compare_custom_snes_one_sided.py
           python3 compare_nitsche_snes.py
+          python3 demo_nitsche_rigid_surface_ufl.py
+          python3 demo_nitsche_rigid_surface_custom.py
+          python3 nitsche_euler_bernoulli.py
+          python3 demo_nitsche_unbiased.py --problem=1
+          python3 demo_nitsche_unbiased.py --problem=2 --friction=0.1
+          python3 demo_nitsche_unbiased.py --problem=3
+          python3 demo_nitsche_unbiased.py --problem=3 --3D --friction=0.1 --coulomb
+          python3 demo_nitsche_meshties.py
+          python3 meshtie_convergence.py --3D
+          python3 meshtie_convergence.py --simplex --3D
+          python3 meshtie_convergence.py
+          python3 meshtie_convergence.py --simplex --runs=4
+          cd oxford
+          python3 blocks_nitsche.py

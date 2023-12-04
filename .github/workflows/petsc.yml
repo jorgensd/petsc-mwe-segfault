@@ -18,6 +18,9 @@ jobs:
       fail-fast: false
 
     env:
+      HDF5_SERIES: "1.14"
+      HDF5_PATCH: "2"
+      HDF5_FIX: ""
       PETSC_ARCH: "linux-gnu-real32-32"
       PETSC_SLEPC_OPTFLAGS: "-O2"
       PETSC_SLEPC_DEBUGGING: "yes"
@@ -70,11 +73,20 @@ jobs:
         run: |
           pip3 install --no-cache-dir mpi4py
 
+      - name: Install HDF5
+        run: |
+          wget -nc --quiet https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-${HDF5_SERIES}/hdf5-${HDF5_SERIES}.${HDF5_PATCH}/src/hdf5-${HDF5_SERIES}.${HDF5_PATCH}${HDF5_FIX}.tar.gz && \
+          tar xfz hdf5-${HDF5_SERIES}.${HDF5_PATCH}${HDF5_FIX}.tar.gz && \
+          cmake -G Ninja -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_BUILD_TYPE=Release -DHDF5_ENABLE_PARALLEL=on -DHDF5_ENABLE_Z_LIB_SUPPORT=on -B build-dir-hdf5 -S hdf5-${HDF5_SERIES}.${HDF5_PATCH}${HDF5_FIX} && \
+          cmake --build build-dir-hdf5 && \
+          cmake --install build-dir-hdf5 && \
+          rm -rf /tmp/*
+
       - name: Install PETSc
         run: |
           apt-get -qq update && \
           apt-get -y install bison flex && \
-          wget -nc --quiet https://web.cels.anl.gov/projects/petsc/download/release-snapshots/petsc-lite-3.20.0.tar.gz -O petsc-${PETSC_VERSION}.tar.gz && \
+          wget -nc --quiet https://web.cels.anl.gov/projects/petsc/download/release-snapshots/petsc-lite-${PETSC_VERSION}.tar.gz -O petsc-${PETSC_VERSION}.tar.gz && \
           mkdir -p ${PETSC_DIR} && tar -xf petsc-${PETSC_VERSION}.tar.gz -C ${PETSC_DIR} --strip-components 1 && \
           cd ${PETSC_DIR} && \
           # Real, 32-bit int
@@ -99,10 +111,10 @@ jobs:
           cd src/binding/petsc4py && \
           PETSC_ARCH=${PETSC_ARCH} pip3 install --no-cache-dir .
 
-      - name: Install git
+      - name: Install git, pugi
         run: |
           apt-get update && \
-          apt-get -y install git
+          apt-get -y install git libpugixml-dev
           apt-get clean && \
           rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 

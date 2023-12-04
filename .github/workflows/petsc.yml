@@ -176,7 +176,21 @@ jobs:
 
       - name: Install contact
         run: BUILD_TYPE="Debug" python3 -m pip -v install ./contact/python/
-
+      - name: Install gmsh deps
+        run: |
+          apt-get update && \
+          apt-get -y install \
+          libglu1 \
+          libxcursor-dev \
+          libxft2 \
+          libxinerama1 \
+          libfltk1.3-dev \
+          libfreetype6-dev  \
+          libgl1-mesa-dev \
+          libocct-foundation-dev \
+          libocct-data-exchange-dev && \
+          apt-get clean && \
+          rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
       - name: Install gmsh
         run: |
           git clone -b gmsh_${GMSH_VERSION} --single-branch --depth 1 https://gitlab.onelab.info/gmsh/gmsh.git && \

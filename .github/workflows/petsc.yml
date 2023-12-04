@@ -18,6 +18,7 @@ jobs:
       fail-fast: false
 
     env:
+      PYBIND11_VERSION: "2.11.1"
       HDF5_SERIES: "1.14"
       HDF5_PATCH: "2"
       HDF5_FIX: ""
@@ -151,7 +152,9 @@ jobs:
         run: |
           cmake --build build-dolfinx
           cmake --install build-dolfinx
-
+      - name: Install pybind
+        run: python3 -m pip install pybind11==${PYBIND11_VERSION}
+      
       - name: Build Python interface (DOLFINx)
         shell: bash -el {0}
         run: PETSC_DIR=${{ env.PETSC_DIR }} PETSC_ARCH=${{ env.PETSC_ARCH }} BUILD_TYPE=Debug python3 -m pip -v install ./dolfinx/python/

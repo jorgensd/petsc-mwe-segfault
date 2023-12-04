@@ -29,6 +29,9 @@ jobs:
       PETSC_VERSION: ${{ matrix.petsc_version }}
       OPENBLAS_NUM_THREADS: 1
       OPENBLAS_VERBOSE: 0
+      GMSH_VERSION: "4_11_1"
+      PYTHONPATH: "/usr/local/lib"
+
     steps:
       - uses: actions/checkout@v4
 
@@ -173,6 +176,14 @@ jobs:
 
       - name: Install contact
         run: BUILD_TYPE="Debug" python3 -m pip -v install ./contact/python/
+
+      - name: Install gmsh
+        run: |
+          git clone -b gmsh_${GMSH_VERSION} --single-branch --depth 1 https://gitlab.onelab.info/gmsh/gmsh.git && \
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DENABLE_BUILD_DYNAMIC=1  -DENABLE_OPENMP=1 -B build-dir -S gmsh && \
+          cmake --build build-dir && \
+          cmake --install build-dir && \
+          rm -rf /tmp/*
 
       - name: Run demos
         run: |
